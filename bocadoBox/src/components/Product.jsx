@@ -7,17 +7,24 @@ export function Product({
   precio,
   imagen,
   tag,
-  categoria,
   calorias,
+  estado,
   onAddToCart,
   onEdit
 }) {
-  // Verificación de disponibilidad condicional (temporada baja de limones)
-  const isUnavailable =
-    /lim[oó]n|limones|limonada/i.test(nombre) ||
-    /lim[oó]n|limones|limonada/i.test(descripcion);
+  const estadoValor = String(estado ?? '').trim().toLowerCase();
 
-  // Parseo del precio numérico para reglas de descuento
+  const isUnavailable =
+    estadoValor === 'false' ||
+    estadoValor === 'agotado' ||
+    estadoValor === '0' ||
+    estadoValor === 'no' ||
+    (!estadoValor && (
+      /lim[oó]n|limones|limonada/i.test(nombre) ||
+      /lim[oó]n|limones|limonada/i.test(descripcion)
+    ));
+
+  // Parseo del precio numérico para mostrarlo con formato local
   const numericPrice = typeof precio === 'number'
     ? precio
     : parseInt(String(precio).replace(/\D/g, '') || '0', 10);
@@ -25,9 +32,6 @@ export function Product({
   const formattedPrice = typeof precio === 'string' && precio.startsWith('$')
     ? precio
     : `$ ${Number(numericPrice).toLocaleString('es-CO')}`;
-
-  const tieneDescuentoMayor = numericPrice > 50000;
-  const tieneDescuentoBowls = String(categoria).toLowerCase().includes('bowl');
 
   return (
     <article
@@ -45,9 +49,9 @@ export function Product({
           <span className="product-pill-badge tag-special">{tag}</span>
         )}
         {isUnavailable ? (
-          <span className="product-pill-badge tag-soldout">❌ Agotado Temporalmente</span>
+          <span className="product-pill-badge tag-soldout">❌ Agotado</span>
         ) : (
-          <span className="product-category-chip">{categoria || 'Bowl Saludable'}</span>
+          <span className="product-category-chip">✅ Disponible</span>
         )}
 
         {imagen ? (
@@ -72,22 +76,6 @@ export function Product({
             {calorias && <span className="calories-badge">🔥 {calorias} kcal</span>}
           </div>
           <p className="product-item-description">{descripcion}</p>
-        </div>
-
-        {/* Badges de Descuentos Condicionales */}
-        <div className="product-discounts-box">
-          {tieneDescuentoMayor && (
-            <div className="discount-banner discount-high">
-              <span className="discount-icon">🏷️</span>
-              <span>¡15% de descuento especial por compra mayor!</span>
-            </div>
-          )}
-          {tieneDescuentoBowls && (
-            <div className="discount-banner discount-bowl">
-              <span className="discount-icon">🥑</span>
-              <span>10% especial en la semana del Bowl Saludable</span>
-            </div>
-          )}
         </div>
 
         {/* Pie de Tarjeta: Precio y Botón de Acción */}

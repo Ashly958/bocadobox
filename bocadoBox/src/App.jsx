@@ -16,6 +16,7 @@ import {
   getEstados,
   crearRecurso,
   actualizarRecurso,
+  eliminarRecurso,
 } from './services/api';
 import { RecursoForm } from './components/RecursoForm';
 import { getCampos, getTitulo, LABEL_RECURSO } from './config/formularios';
@@ -54,6 +55,10 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [modal, setModal] = useState(null);
+  const [mesaActiva, setMesaActiva] = useState(() => {
+    const mesaGuardada = Number(localStorage.getItem('mesaActiva'));
+    return Number.isInteger(mesaGuardada) && mesaGuardada > 0 ? mesaGuardada : 4;
+  });
 
   // ---------------------------------------------------------------------------
   // Datos traídos del mock de Postman. Cada recurso solo se consulta cuando
@@ -137,6 +142,24 @@ function App() {
     setModal(null);
   };
 
+  const cancelarOrden = async (orden) => {
+    const identificador = orden.numero || orden.id;
+    const confirmado = window.confirm(
+      `¿Quieres cancelar la orden ${identificador} de ${orden.ubicacion || 'esta mesa'}? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) return;
+
+    try {
+      await eliminarRecurso('orden', orden.id);
+      ordenesReq.reintentar();
+      setToastMessage('✅ Orden cancelada correctamente.');
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (error) {
+      setToastMessage(`⚠️ ${error.message || 'No se pudo cancelar la orden.'}`);
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
+
   // Manejo de la canasta (Mi Box)
   const handleAddToCart = (nombreProducto) => {
     const prod = productos.find((p) => p.nombre === nombreProducto);
@@ -160,6 +183,35 @@ function App() {
   const totalCartCount = cartItems.reduce((acc, curr) => acc + curr.cantidad, 0);
   const totalCartPrice = cartItems.reduce((acc, curr) => acc + curr.precio * curr.cantidad, 0);
 
+  const confirmarPedido = async () => {
+    const mesaFormateada = String(mesaActiva).padStart(2, '0');
+    const siguienteMesa = mesaActiva >= 10 ? 1 : mesaActiva + 1;
+    const orden = {
+      numero: `ORD-${Date.now()}`,
+      cliente: `Comensal Mesa #${mesaFormateada}`,
+      estadoId: 'EST-01',
+      estado: 'Pendiente',
+      ubicacion: `Mesa #${mesaFormateada}`,
+      productos: cartItems.map((item) => `${item.cantidad}x ${item.nombre}`).join(', '),
+      cantidadItems: totalCartCount,
+      total: totalCartPrice,
+    };
+
+    try {
+      await crearRecurso('orden', orden);
+      localStorage.setItem('mesaActiva', String(siguienteMesa));
+      setMesaActiva(siguienteMesa);
+      setCartItems([]);
+      setIsCartOpen(false);
+      setToastMessage(`✅ Orden enviada. Siguiente mesa: #${String(siguienteMesa).padStart(2, '0')}`);
+      setTimeout(() => setToastMessage(null), 3000);
+      irAVista('ordenes');
+    } catch (error) {
+      setToastMessage(`⚠️ ${error.message || 'No se pudo enviar la orden.'}`);
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
+
   // Filtrado de productos por categoría y término de búsqueda
   const productosFiltrados = productos.filter((p) => {
     const nombreCategoria = p.categoria ?? '';
@@ -181,6 +233,7 @@ function App() {
         onSelectVista={irAVista}
         cartCount={totalCartCount}
         onOpenCart={() => setIsCartOpen(true)}
+        mesaActiva={mesaActiva}
       />
 
       {/* Componente Transversal: Encabezado / Hero Banner Contextual */}
@@ -264,6 +317,7 @@ function App() {
                     tag={producto.etiqueta}
                     categoria={producto.categoria}
                     calorias={producto.calorias}
+                    estado={producto.estado}
                     onAddToCart={handleAddToCart}
                     onEdit={() => abrirModal('producto', 'editar', producto)}
                   />
@@ -435,7 +489,10 @@ function App() {
                     <p className="order-items-summary">{ord.productos}</p>
                     <div className="order-card-footer">
                       <span className="order-total-price">{formatearPrecio(ord.total)}</span>
-                      <button className="btn-order-details" onClick={() => abrirModal('orden', 'editar', ord)}>Editar Comanda →</button>
+                      <div className="order-card-actions">
+                        <button className="btn-order-details" onClick={() => abrirModal('orden', 'editar', ord)}>Editar Comanda →</button>
+                        <button className="btn-order-cancel" onClick={() => cancelarOrden(ord)}>Cancelar</button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -582,11 +639,7 @@ function App() {
                 </div>
                 <button
                   className="btn-confirm-order"
-                  onClick={() => {
-                    alert('¡Comanda enviada a la barra de ensamble de Bocado Box! Mesa #04');
-                    setCartItems([]);
-                    setIsCartOpen(false);
-                  }}
+                  onClick={confirmarPedido}
                 >
                   Confirmar y Enviar a Barra Fría 🥗
                 </button>

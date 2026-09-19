@@ -5,7 +5,8 @@ export function Header({
   vistaActiva,
   onSelectVista,
   cartCount = 0,
-  onOpenCart = () => {}
+  onOpenCart = () => {},
+  mesaActiva = 4
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -68,6 +69,7 @@ export function Header({
             onSelectVista={onSelectVista}
             isMobileOpen={isMobileMenuOpen}
             onCloseMobile={() => setIsMobileMenuOpen(false)}
+            mesaActiva={mesaActiva}
           />
 
           {/* Acciones de Cabecera */}
@@ -79,7 +81,7 @@ export function Header({
               </div>
               <div className="user-meta-text">
                 <span className="user-role">Mesa Activa</span>
-                <span className="user-name">Mesa #04</span>
+                <span className="user-name">Mesa #{String(mesaActiva).padStart(2, '0')}</span>
               </div>
             </div>
 

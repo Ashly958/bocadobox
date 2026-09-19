@@ -57,3 +57,14 @@ export const crearRecurso = (recurso, body) => enviar(recurso, "POST", recurso, 
 // Actualiza un registro existente por id
 export const actualizarRecurso = (recurso, id, body) =>
   enviar(recurso, "PUT", `${recurso}/${id}`, body);
+
+// Elimina un registro existente por id
+export const eliminarRecurso = async (recurso, id) => {
+  const respuesta = await fetch(`${API_BASE}/${recurso}/${id}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  });
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo eliminar en "${recurso}" (código ${respuesta.status}).`);
+  }
+};

@@ -1247,6 +1247,27 @@
   color: var(--text-main);
 }
 
+.order-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.btn-order-cancel {
+  border: 0;
+  background: transparent;
+  color: #c2413b;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 6px 0;
+}
+
+.btn-order-cancel:hover {
+  color: #991b1b;
+  text-decoration: underline;
+}
+
 /* Grilla de Usuarios */
 .users-card-grid {
   display: grid;

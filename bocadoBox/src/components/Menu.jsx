@@ -5,7 +5,8 @@ export function Menu({
   vistaActiva,
   onSelectVista,
   isMobileOpen = false,
-  onCloseMobile = () => {}
+  onCloseMobile = () => {},
+  mesaActiva = 4
 }) {
   return (
     <>
@@ -79,7 +80,7 @@ export function Menu({
         <div className="mobile-nav-footer">
           <div className="system-pill">
             <span className="status-dot online"></span>
-            <span>Cocina Saludable • Mesa 04</span>
+            <span>Cocina Saludable • Mesa {String(mesaActiva).padStart(2, '0')}</span>
           </div>
         </div>
       </div>
